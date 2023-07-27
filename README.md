@@ -1,19 +1,46 @@
 # @looksrare/contracts-libs
 
-This repository contains a set of Solidity contracts that can be used across contracts for purposes such as verifying signatures, protecting contracts against reentrancy attacks, and a library for managing the ownership of a contract.
+[![Tests](https://github.com/LooksRare/contracts-libs/actions/workflows/tests.yaml/badge.svg)](https://github.com/LooksRare/contracts-libs/actions/workflows/tests.yaml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-It also contains contract interfaces that can be used.
+This repository contains a set of Solidity contracts that can be used across contracts for purposes such as verifying signatures, protecting contracts against reentrancy attacks, low-level call functions, and a library for managing the ownership of a contract.
+
+It also contains generic contract interfaces (for EIP/ERC) that can be used.
+
+## Installation
+
+```shell
+# Yarn
+yarn add @looksrare/contracts-libs
+
+# NPM
+npm install @looksrare/contracts-libs
+```
+
+## NPM package
+
+The NPM package contains the following:
+
+- Solidity smart contracts (_".sol"_)
+- ABIs (_".json"_)
 
 ## Current contracts
 
-| Name             | Description                                                                                                 | Type      | Latest version |
-| ---------------- | ----------------------------------------------------------------------------------------------------------- | --------- | -------------- |
-| OwnableTwoSteps  | Contract for managing ownership of a smart contract. The transfer of ownership is done in a 2-step process. | Contract  | 1.0.0          |
-| SignatureChecker | Contract for verifying the validity of a signature for EOA (64-byte, 65-byte signatures) and EIP-1271.      | Contract  | 1.0.0          |
-| ReentrancyGuard  | Contract with a modifier to prevent reentrancy calls.                                                       | Contract  | 1.0.0          |
-| IERC165          | -                                                                                                           | Interface | 1.0.0          |
-| IERC1271         | -                                                                                                           | Interface | 1.0.0          |
-| IERC2981         | -                                                                                                           | Interface | 1.0.0          |
+| Name                                  | Description                                                                                                                   | Type     | Latest version |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | -------- | -------------- |
+| OwnableTwoSteps                       | Contract for managing ownership of a smart contract. The transfer of ownership is done in a 2-step process.                   | Contract | 2.5.0          |
+| SignatureCheckerCalldata              | Contract for verifying the validity of a (calldata) signature for EOA (64-byte, 65-byte signatures) and EIP-1271.             | Contract | 3.0.0          |
+| SignatureCheckerMemory                | Contract for verifying the validity of a (memory) signature for EOA (64-byte, 65-byte signatures) and EIP-1271.               | Contract | 3.0.0          |
+| ReentrancyGuard                       | Contract with a modifier to prevent reentrancy calls.                                                                         | Contract | 2.4.4          |
+| PackedReentrancyGuard                 | Contract with a modifier to prevent reentrancy calls. Adapted from ReentrancyGuard.                                           | Contract | 2.5.1          |
+| LowLevelETHTransfer                   | Low-level call function to transfer ETH                                                                                       | Contract | 2.4.4          |
+| LowLevelETHReturnETHIfAny             | Low-level call function to return all ETH left                                                                                | Contract | 2.4.4          |
+| LowLevelETHReturnETHIfAnyExceptOneWei | Low-level call function to return all ETH left except one wei                                                                 | Contract | 2.4.4          |
+| LowLevelWETH                          | Low-level call functions to transfer ETH with an option to wrap to WETH if the original ETH transfer fails within a gas limit | Contract | 2.4.4          |
+| LowLevelERC20Approve                  | Low-level call functions for ERC20 approve functions                                                                          | Contract | 2.4.4          |
+| LowLevelERC20Transfer                 | Low-level call functions for ERC20 transfer functions                                                                         | Contract | 2.4.4          |
+| LowLevelERC721Transfer                | Low-level call functions for ERC721 functions                                                                                 | Contract | 2.4.4          |
+| LowLevelERC1155Transfer               | Low-level call functions for ERC1155 functions                                                                                | Contract | 2.4.4          |
 
 ## About this repo
 
@@ -36,19 +63,6 @@ forge test -vv
 forge tree
 ```
 
-### Example of Hardhat commands
-
-```shell
-npx hardhat accounts
-npx hardhat compile
-npx hardhat clean
-npx hardhat test
-npx hardhat node
-npx hardhat help
-REPORT_GAS=true npx hardhat test
-npx hardhat coverage
-```
-
 ### Example of other commands
 
 ```shell
@@ -58,4 +72,22 @@ npx prettier '**/*.{json,sol,md}' --check
 npx prettier '**/*.{json,sol,md}' --write
 npx solhint 'contracts/**/*.sol'
 npx solhint 'contracts/**/*.sol' --fix
+```
+
+### Coverage
+
+It is required to install lcov.
+
+```shell
+brew install lcov
+```
+
+To run the coverage report, the below command can be executed.
+
+```
+forge coverage --report lcov
+LCOV_EXCLUDE=("test/*" "contracts/interfaces/*" "contracts/errors/*.sol")
+echo $LCOV_EXCLUDE | xargs lcov --output-file lcov-filtered.info --remove lcov.info
+genhtml lcov-filtered.info --output-directory out
+open out/index.html
 ```

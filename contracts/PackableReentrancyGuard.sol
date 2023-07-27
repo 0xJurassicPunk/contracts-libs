@@ -5,13 +5,16 @@ pragma solidity ^0.8.17;
 import {IReentrancyGuard} from "./interfaces/IReentrancyGuard.sol";
 
 /**
- * @title ReentrancyGuard
+ * @title PackableReentrancyGuard
  * @notice This contract protects against reentrancy attacks.
  *         It is adjusted from OpenZeppelin.
+ *         The only difference between this contract and ReentrancyGuard
+ *         is that _status is uint8 instead of uint256 so that it can be
+ *         packed with other contracts' storage variables.
  * @author LooksRare protocol team (👀,💎)
  */
-abstract contract ReentrancyGuard is IReentrancyGuard {
-    uint256 private _status;
+abstract contract PackableReentrancyGuard is IReentrancyGuard {
+    uint8 private _status;
 
     /**
      * @notice Modifier to wrap functions to prevent reentrancy calls.

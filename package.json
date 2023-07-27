@@ -1,6 +1,6 @@
 {
   "name": "@looksrare/contracts-libs",
-  "version": "1.1.0",
+  "version": "3.1.1",
   "description": "LooksRare contract helper libraries",
   "author": "LooksRare",
   "license": "MIT",
@@ -8,7 +8,11 @@
   "files": [
     "/abis/*.json",
     "/contracts/*.sol",
-    "/contracts/interfaces/*.sol"
+    "/contracts/constants/*.sol",
+    "/contracts/errors/*.sol",
+    "/contracts/interfaces/*.sol",
+    "/contracts/interfaces/generic/*.sol",
+    "/contracts/lowLevelCallers/*.sol"
   ],
   "keywords": [
     "looksrare",
@@ -32,10 +36,10 @@
     "compile:forge": "forge build",
     "compile:hardhat:force": "hardhat compile --force",
     "format:check": "prettier --check '**/*.{js,jsx,ts,tsx,sol,json,yaml,md}'",
-    "format:write": "prettier --write '**/*.{js,jsx,ts,tsx,json,yaml,md}'",
+    "format:write": "prettier --write '**/*.{js,jsx,ts,tsx,json,yaml,sol,md}'",
     "lint": "eslint '**/*.{js,jsx,ts,tsx}'",
     "prepare": "husky install",
-    "release": "release-it",
+    "release": "hardhat export-abi && release-it",
     "test:forge": "forge test",
     "test:hardhat": "hardhat test",
     "test:hardhat:gas": "REPORT_GAS=true hardhat test",
@@ -71,10 +75,11 @@
     "husky": "^7.0.4",
     "merkletreejs": "^0.2.31",
     "prettier": "^2.3.2",
-    "prettier-plugin-solidity": "^1.0.0-beta.13",
+    "prettier-plugin-solidity": "^1.1.1",
     "release-it": "^15.0.0",
     "solhint": "^3.3.7",
     "solidity-coverage": "^0.7.21",
+    "solmate": "^6.6.1",
     "ts-node": "^10.1.0",
     "typechain": "^5.1.2",
     "typescript": "^4.5.2"

@@ -1,103 +1,136 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.14;
+pragma solidity ^0.8.17;
+
+// Interfaces
+import {IOwnableTwoSteps} from "./interfaces/IOwnableTwoSteps.sol";
 
 /**
  * @title OwnableTwoSteps
- * @notice This contract offers transfer of ownership in two steps.
- * @dev It is currently not possible to renounce ownership.
+ * @notice This contract offers transfer of ownership in two steps with potential owner
+ *         having to confirm the transaction to become the owner.
+ *         Renouncement of the ownership is also a two-step process since the next potential owner is the address(0).
+ * @author LooksRare protocol team (👀,💎)
  */
-contract OwnableTwoSteps {
-    // Address of the current owner
-    address private _owner;
-
-    // Address of the potential owner
-    address private _potentialOwner;
-
-    // Custom errors
-    error NoPotentialOwner();
-    error NotOwner();
-    error TransferAlreadyInProgress();
-    error WrongPotentialOwner();
-
-    // Events
-    event CancelOwnershipTransfer(address previousPotentialOwner);
-    event InitiateOwnershipTransfer(address previousOwner, address potentialOwner);
-    event NewOwner(address newOwner);
+abstract contract OwnableTwoSteps is IOwnableTwoSteps {
+    /**
+     * @notice Address of the current owner.
+     */
+    address public owner;
 
     /**
-     * @notice Modifier to wrap functions for contracts that inherit this contract
+     * @notice Address of the potential owner.
+     */
+    address public potentialOwner;
+
+    /**
+     * @notice Ownership status.
+     */
+    Status public ownershipStatus;
+
+    /**
+     * @notice Modifier to wrap functions for contracts that inherit this contract.
      */
     modifier onlyOwner() {
-        if (msg.sender != _owner) {
-            revert NotOwner();
-        }
+        _onlyOwner();
         _;
     }
 
     /**
      * @notice Constructor
+     * @param _owner The contract's owner
      */
-    constructor() {
-        _owner = msg.sender;
+    constructor(address _owner) {
+        owner = _owner;
+        emit NewOwner(_owner);
     }
 
     /**
-     * @notice Cancel transfer of ownership
+     * @notice This function is used to cancel the ownership transfer.
+     * @dev This function can be used for both cancelling a transfer to a new owner and
+     *      cancelling the renouncement of the ownership.
      */
     function cancelOwnershipTransfer() external onlyOwner {
-        address previousPotentialOwner = _potentialOwner;
-
-        if (previousPotentialOwner == address(0)) {
-            revert NoPotentialOwner();
+        Status _ownershipStatus = ownershipStatus;
+        if (_ownershipStatus == Status.NoOngoingTransfer) {
+            revert NoOngoingTransferInProgress();
         }
 
-        _potentialOwner = address(0);
+        if (_ownershipStatus == Status.TransferInProgress) {
+            delete potentialOwner;
+        }
 
-        emit CancelOwnershipTransfer(previousPotentialOwner);
+        delete ownershipStatus;
+
+        emit CancelOwnershipTransfer();
     }
 
     /**
-     * @notice Confirm ownership transfer
-     * @dev It can only be called by the current potential owner
+     * @notice This function is used to confirm the ownership renouncement.
+     */
+    function confirmOwnershipRenouncement() external onlyOwner {
+        if (ownershipStatus != Status.RenouncementInProgress) {
+            revert RenouncementNotInProgress();
+        }
+
+        delete owner;
+        delete ownershipStatus;
+
+        emit NewOwner(address(0));
+    }
+
+    /**
+     * @notice This function is used to confirm the ownership transfer.
+     * @dev This function can only be called by the current potential owner.
      */
     function confirmOwnershipTransfer() external {
-        if (msg.sender != _potentialOwner) {
+        if (ownershipStatus != Status.TransferInProgress) {
+            revert TransferNotInProgress();
+        }
+
+        if (msg.sender != potentialOwner) {
             revert WrongPotentialOwner();
         }
 
-        _owner = msg.sender;
-        _potentialOwner = address(0);
+        owner = msg.sender;
+        delete ownershipStatus;
+        delete potentialOwner;
 
         emit NewOwner(msg.sender);
     }
 
     /**
-     * @notice Initiate transfer of ownership to a new owner
-     * @param newPotentialOwner address of the potential owner
+     * @notice This function is used to initiate the transfer of ownership to a new owner.
+     * @param newPotentialOwner New potential owner address
      */
     function initiateOwnershipTransfer(address newPotentialOwner) external onlyOwner {
-        if (_potentialOwner != address(0)) {
+        if (ownershipStatus != Status.NoOngoingTransfer) {
             revert TransferAlreadyInProgress();
         }
 
-        _potentialOwner = newPotentialOwner;
+        ownershipStatus = Status.TransferInProgress;
+        potentialOwner = newPotentialOwner;
 
-        emit InitiateOwnershipTransfer(_owner, newPotentialOwner);
+        /**
+         * @dev This function can only be called by the owner, so msg.sender is the owner.
+         *      We don't have to SLOAD the owner again.
+         */
+        emit InitiateOwnershipTransfer(msg.sender, newPotentialOwner);
     }
 
     /**
-     * @notice Returns owner address
-     * @return owner address
+     * @notice This function is used to initiate the ownership renouncement.
      */
-    function owner() external view returns (address) {
-        return _owner;
+    function initiateOwnershipRenouncement() external onlyOwner {
+        if (ownershipStatus != Status.NoOngoingTransfer) {
+            revert TransferAlreadyInProgress();
+        }
+
+        ownershipStatus = Status.RenouncementInProgress;
+
+        emit InitiateOwnershipRenouncement();
     }
 
-    /**
-     * @notice Returns potential owner address
-     * @return potential owner address
-     */
-    function potentialOwner() external view returns (address) {
-        return _potentialOwner;
+    function _onlyOwner() private view {
+        if (msg.sender != owner) revert NotOwner();
     }
 }
